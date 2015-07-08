@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\begin{document}
+	
+	\section{Input}
+	$n$ individuals, $m$ snps, $k$ gene expression phenotypes
+	\[\mb{X}_{n \times m} \in \{0,1\}^{n \times m}\]
+	\[\mb{Y}_{n \times k}, \mb{y} \sim N(0,1)\]
+	
+	
+	
+	\section{Random projection}
+	Vectors $(1 \times n) $for each SNP: $\mb{v}$ and $\mb{u}$, where
+	\[v_i = \sqrt{\frac{|y_i|}{\hat{p} \sqrt{n}}}x_i\]
+	and $u_i = \text{sign}(y_i)v_i$.
+	
+	Note that $\mb{vu} \approxeq 2\ln(\text{GLR})$.
+	
+	Random vector: $\mb{r}_{n}$, where $r_i \sim N(0,1)$. 
+	
+	
+	\section{Next steps}
+	LD - add kinship matrix term to eqn
+	Proof of recall rate
+	Apply to phenotype-snp instead of snp-snp, reduce dimensions of $\mb{Y}$.
+	
+\end{document}\documentclass{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\begin{document}
+
+\section{Input}
+$n$ individuals, $m$ snps, $k$ gene expression phenotypes
+\[\mb{X}_{n \times m} \in \{0,1\}^{n \times m}\]
+\[\mb{Y}_{n \times k}, \mb{y} \sim N(0,1)\]
+
+
+
+\section{Random projection}
+Vector for each SNP: $\mb{v}_{n}$, where
+\[v_i = \sqrt{\frac{|y_i|}{\hat{p} \sqrt{n}}}x_i\]
+
+Random vector: $\mb{r}_{n}$, where $r_i \sim N(0,1)$. 
+
+\section{Next steps}
+LD - add kinship matrix term to eqn
+Proof of recall rate
+Apply to phenotype-snp instead of snp-snp, reduce dimensions of $\mb{Y}$.
+
+\end{document}
