@@ -6,36 +6,40 @@
 	
 \section{eQTL studies}
 \subsection{Preliminaries}
-Assume our genetic study collects $N$ individuals, $M$ variants, and $k$ qualitative phenotypes (in the case of an eQTL study, $k$ gene expression phenotypes). The variants may be in linkage disequilibrium (LD) with each other. Denote the frequency of variant $i$ in the population as $p_i$, and the genotype of the $i$th variant in the $j$th individual as $g_{ij} \in {0,1,2}$. Without loss of generality, we normalize the genotype values to $x_{i,j} =$ (CACM review above eq 1) to simplify equations presented later in the paper.
+Assume our genetic study collects $N$ individuals, $M$ variants, and $k$ qualitative phenotypes (in the case of an eQTL study, $k$ gene expression phenotypes). The variants may be in linkage disequilibrium (LD) with each other. Denote the frequency of variant $i$ in the population as $p_i$, and the genotype of the $i$th variant in the $j$th individual as $g_{ij} \in {0,1,2}$. Without loss of generality, we normalize the genotype values to $x_{ij} =$ (CACM review above eq 1) to simplify equations presented later in the paper.
 
-Denote the matrix of normalized genotype values as $\mb{X}_{n \times m}$, where $\mb{X_i}$ is the vector of genotypes at variant $i$. Note that due to the normalization, $X_i$ has mean 0 and variance 1, and $X_i^T X_i = N$.
+Denote the matrix of normalized genotype values as $\mb{X}_{n \times m}$, where $\mb{X_i}$ is the vector of genotypes at variant $i$. Note that due to the normalization, $X_i$ has mean 0 and variance 1, and $\mb{X_i}^T \mb{X_i} = N$.
 
 Denote the $h$th phenotype of the $j$th individual as $y_{h,j}$. Using a classic additive model, we can model this phenotype as 
 \[ y_{h,j} = \text{CACM eq 1 or 9}\] 
-where $\beta_{h,i}$ is the effect of variant $i$ on the phenotype, $\mu_h$ is the model mean of $y_{h,j}$, and $\eta_{h,j}$ is the contribution of environment, which is assumed to be normally distributed with mean zero and variance $\sigma_e^2$, i.e $\eta_{h,j} \sim N(0,\sigma_e^2)$. Then denote the matrix of all $k$ phenotype values as $\mb{Y}_{n \times k}$, and the vector of phenotypes for the $h$th phenotype as $\mb{Y_h}$. We use a basic additive model here for simplicity, but a variety of more sophisticated phenotype models are available, which capture factors such as epistatic effects and population structure.
+where $\beta_{hi}$ is the effect of variant $i$ on the phenotype, $\mu_h$ is the model mean of $y_{hj}$, and $\eta_{hj}$ is the contribution of environment, which is assumed to be normally distributed with mean zero and variance $\sigma_e^2$, i.e $\eta_{hj} \sim N(0,\sigma_e^2)$. Then denote the matrix of all $k$ phenotype values as $\mb{Y}_{n \times k}$, and the vector of phenotypes for the $h$th phenotype as $\mb{Y_h}$. Note $\hat{\beta_i}  = \frac{X_i Y_h}{N}$. We use a basic additive model here for simplicity, but a variety of more sophisticated phenotype models are available, which capture factors such as epistatic effects and population structure.
 
 The corresponding hypotheses for the model in Equation 1 are
-\[H_0: \beta_{h,i} = 0, \ \ H_1: \beta_{h,i} \not= 0\]
+\[H_0: \beta_{hi} = 0, \ \ H_1: \beta_{hi} \not= 0\]
 These hypotheses are evaluated using an association test statistic, described in the next section.
 
 \subsection{Detecting association}
-For each variant $i$ and phenotype $k$, we can define an association statistic $S_{i,k}$ that measures the strength of the association, which is normally distributed for large $N$. $S_{i,k}$ is given by (CACM eq 11).
+For each variant $i$ and phenotype $h$, we can define an association statistic $S_{ih}$ that measures the strength of the association, which is normally distributed for large $N$. $S_{ih}$ is given by
+\[S_{ih} = \hat{\beta_{ih}}/\hat{\sigma} 
+~ N(\frac{beta_k}{\sigma_{e}}, 1)\]
 
-A traditional GWAS computes $S_{i,k}$ for each SNP and phenotype in the study, and compares $\phi(S_{i,k})$ against the significance threshold $\alpha_s$, where $\phi(x)$ is the cumulative normal distribution. The standard for GWAS studies is $\alpha_s = 5 \times 10^{-8}$.
+A traditional GWAS computes $S_{ih}$ for each SNP and phenotype in the study, and compares $\phi(S_{ik})$ against the significance threshold $\alpha_s$, where $\phi(x)$ is the cumulative normal distribution. The standard threshold for GWAS studies is $\alpha_s = 5 \times 10^{-8}$ [cite CACM review].
 
-The statistical power of an association study is the probability that a truly associated variant will be found significant by the study. Using the association statistic defined above, this is the probability that a SNP with a true value of $S_{i,k}$ above the significance threshold has an observed value $\hat{S_{i,k}}$ above the threshold. This probability can be estimated as:
+The goal of an association test to determine whether the effect size for a variant $i$ and trait $h$ is significant, $\beta_{ih}$ is significantly associated, by checking whether $|\beta_{ih}| > \phi(\alpha/2)/\sqrt{N}$, which if true, indicates the corresponding variant is associated with the trait. $S$ was derived such that we can equivalently test $\phi(S_{ih}) < \alpha/2$ or $\phi(S_{ih}) > 1 - \alpha/2$. Note that with normalized phenotypes, the variance $\sigma \approx 1$ and $S \approx \beta_{ih}/N$.
+
+%The statistical power of an association study is the probability that a truly associated variant will be found significant by the study. Using the association statistic defined above, this is the probability that a SNP with a true value of $S_{i,k}$ above the significance threshold has an observed value $\hat{S_{i,k}}$ above the threshold. This probability can be estimated as:
 \[P(\alpha_s, \beta_k, \sigma, N) = (CACM eq 12)\]
 
 
-\section{Random projection}
-Vectors $(1 \times n) $for each SNP: $\mb{v}$ and $\mb{u}$, where
-\[v_i = \sqrt{\frac{|y_i|}{\hat{p} \sqrt{n}}}x_i\]
-and $u_i = \text{sign}(y_i)v_i$.
+%\section{Random projection}
+%Vectors $(1 \times n) $for %each SNP: $\mb{v}$ and $\mb{u}$, where
+%\[v_i = \sqrt{\frac{|y_i|}{\hat{p} \sqrt{n}}}x_i\]
+%and $u_i = \text{sign}(y_i)v_i$.
 	
-Note that $\mb{vu} \approx 2\ln(\text{GLR})$.
+%Note that $\mb{vu} \approx 2\ln(\text{GLR})$.
 	
-Random vector: $\mb{r}_{n}$, where $r_i \sim N(0,1)$. 
+%Random vector: $\mb{r}_{n}$, where $r_i \sim N(0,1)$. 
 	
-\section{Next steps}
+%\section{Next steps}
 
 \end{document}
