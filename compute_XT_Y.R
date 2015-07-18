@@ -12,20 +12,21 @@
 
 # find estimated std error (sigmaHat) for each snp, pheno pair
 # return m x k matrix of sigmaHat's
-
-findSigmaHats <- function(X,Y, N){
-  if (false){ # for one h,i pair
-  beta_hi = X_i^T*Y_h/N
-  e_hi = Y_h - beta_hi*X_i # mean of Y_h is 0
-  sigmaHat_hi = sqrt(t(e_hi) %*% e_hi)*sqrt(1/(N-2))
+findSigmaHats <- function(X,Y){
+  n<-nrow(X)
+  m<-ncol(X)
+  k<-ncol(Y)
+  Beta <- crossprod(X,Y)/n  # m x k matrix of betas
+  SigmaHat <- (data=NA, nrow=m, ncol=k)
+  # nested for loop probably bad R
+  # for one h,i pair
+  for (i in 1:m){ 
+    for (h in 1:k){
+      e_hi = Y[,h] - Beta[h,i]*X[,i] # 1 x n vector of residuals 
+        # ^also note mean of Y_h is 0
+      SigmaHat[i,h] = sqrt( crossprod(e_hi) / (n-2) )
+    }
   }
-  
-  N = 119
-  betas = (t(X) %*% Y)/N  # m x k
-  
-  # TODO what dim should es have
-  es = Y - betas %*% X
-  sigmaHats = sqrt()
 }
 
 
@@ -59,10 +60,10 @@ temp_full <- cbind(temp, temp_colnames)
 
 
 if (false){
-TODO matrixify/normalize G
-TODO convert Y.df to matrix, keep probe labels
-TODO find probes and snps where X^T*Y > thresh
-check whether probes are in correct region
+  TODO matrixify/normalize G
+  TODO convert Y.df to matrix, keep probe labels
+  TODO find probes and snps where X^T*Y > thresh
+  check whether probes are in correct region
 }
 
 if (false) {
