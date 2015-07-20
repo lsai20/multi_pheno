@@ -7,9 +7,6 @@
 # first 1k snps are all from chr 1
 # chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
 
-
-# TODO why not use stdev(vals)/(N) for std err?
-
 # find estimated std error (sigmaHat) for each snp, pheno pair
 # return m x k matrix of sigmaHat's
 findSigmaHats <- function(X,Y){
@@ -20,7 +17,7 @@ findSigmaHats <- function(X,Y){
   SigmaHat <- matrix(data=NA, nrow=m, ncol=k)
   # nested for loop probably bad R
   # for one h,i pair
-  for (i in 1:m){ 
+  for (i in 1:m){
     for (h in 1:k){
       e_hi <- Y[,h] - Beta[i,h]*X[,i] # 1 x n vector of residuals 
         # ^also note mean of Y_h is 0
@@ -45,7 +42,6 @@ findThresholds <- function(alpha, n, SigmaHat){
   return (Thresh)
 }
 
-
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
 expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
 
@@ -59,14 +55,18 @@ SigmaHat<-findSigmaHats(X,Y)
 Thresh<-findThresholds(alpha=0.05, n=nrow(X), SigmaHat=SigmaHat)
 
 # X^T = m x n, Y = n x k
+# TODO use Beta not Xt_Y
+Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
 Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y) #TODO don't compute twice for SigmaHat fxn
-sigPairs <- which(Xt_Y > Thresh, arr.ind=TRUE) # indices of sig snp-pheno pairs
+sigPairs <- which(abs(Xt_Y) > Thresh, arr.ind=TRUE) # indices of sig snp-pheno pairs
+
 # add column names, beta threshold, beta value 
 sigPairs_results <- cbind(sigPairs, 
                           colnames(Xt_Y)[sigPairs[,2]],
-                          beta_thresh_ih, # TODO
-                          beta_value_ih
+                          Thresh[sigPairs],
+                          Xt_Y[sigPairs]
                           )
+colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
 if (false){
   DONE matrixify/normalize G
