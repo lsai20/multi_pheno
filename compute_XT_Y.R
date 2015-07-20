@@ -17,29 +17,34 @@ findSigmaHats <- function(X,Y){
   m<-ncol(X)
   k<-ncol(Y)
   Beta <- crossprod(X,Y)/n  # m x k matrix of betas
-  SigmaHat <- (data=NA, nrow=m, ncol=k)
+  SigmaHat <- matrix(data=NA, nrow=m, ncol=k)
   # nested for loop probably bad R
   # for one h,i pair
   for (i in 1:m){ 
     for (h in 1:k){
-      e_hi = Y[,h] - Beta[h,i]*X[,i] # 1 x n vector of residuals 
+      e_hi <- Y[,h] - Beta[i,h]*X[,i] # 1 x n vector of residuals 
         # ^also note mean of Y_h is 0
-      SigmaHat[i,h] = sqrt( crossprod(e_hi) / (n-2) )
+      SigmaHat[i,h] <- sqrt( crossprod(e_hi) / (n-2) )
     }
   }
+  rownames(SigmaHat)<-colnames(X)
+  colnames(SigmaHat)<-colnames(Y)
+  return (SigmaHat)
 }
 
 
 # find t s.t. |S| > phi-1(alpha/2) iff | X^T*Y[snp,pheno] | >  t
 # return m x k matrix of t's
-findThesholds <- function(alpha, N, sigmaHats){
+# note: input SigmaHat is an m x k matrix of estimated std err
+findThresholds <- function(alpha, n, SigmaHat){
   # different sigmaHat for each snp-phenotype pair
-  Sthresh <- qnorm(alpha/2)
-  thresh <- sqrt(N) * Sthresh * sigmaHat
-  return thresh
+  Sthresh <- qnorm(alpha/2, lower.tail=FALSE) # the threshold if using standardized assoc stat S
+  Thresh <- sqrt(n) * Sthresh * SigmaHat
+  rownames(Thresh)<-rownames(SigmaHat)
+  colnames(Thresh)<-colnames(SigmaHat)
+  return (Thresh)
 }
 
-qnorm(0.025, lower.tail=FALSE)
 
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
 expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
@@ -50,19 +55,23 @@ Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
 G<-t(Gt)
 X<-scale(G)  # standardize genotypes to mean 0, var 1
 Y<-t(data.matrix(Yt.df))
+SigmaHat<-findSigmaHats(X,Y)
+Thresh<-findThresholds(alpha=0.05, n=nrow(X), SigmaHat=SigmaHat)
 
 # X^T = m x n, Y = n x k
-
-Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y)
-temp <- which(Xt_Y > 40, arr.ind=TRUE)
-temp_colnames <- colnames(Xt_Y)[temp[,2]]
-temp_full <- cbind(temp, temp_colnames)
-
+Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y) #TODO don't compute twice for SigmaHat fxn
+sigPairs <- which(Xt_Y > Thresh, arr.ind=TRUE) # indices of sig snp-pheno pairs
+# add column names, beta threshold, beta value 
+sigPairs_results <- cbind(sigPairs, 
+                          colnames(Xt_Y)[sigPairs[,2]],
+                          beta_thresh_ih, # TODO
+                          beta_value_ih
+                          )
 
 if (false){
-  TODO matrixify/normalize G
-  TODO convert Y.df to matrix, keep probe labels
-  TODO find probes and snps where X^T*Y > thresh
+  DONE matrixify/normalize G
+  DONE convert Y.df to matrix, keep probe labels
+  DONE find probes and snps where X^T*Y > thresh
   check whether probes are in correct region
 }
 
