@@ -77,7 +77,7 @@ def recodeGeno(gtexGeno):
 
 # TODO add tfam from header
 def fixFormat(genoToFix, mapToFix, inPath, outBase, outPath, outPath_snp_list, useEMMA = False): #, nonMissingThresh = 1):
-	lineNo = 0
+	lineNo = -1
 	chunkNo = 0
 	CHUNKNO = str(chunkNo).zfill(4) # pad to 4 digit w leading zeros
 
