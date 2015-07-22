@@ -196,7 +196,7 @@ mapToFilter = "Lung1k.snps.map"
 
 #inPath = "/u/home/f/fhormoz/project/data/GTEx/jaehoon/genotypes"
 #inPath = "/u/scratch/l/lgai/GTEx_data/Lung_geno_unsplit"
-inPath = "~/multi_pheno/GTEx_data"
+inPath = "/u/home/l/lgai/multi_pheno/GTEx_data"
 #outBase = "Lung"
 #outPath = "/u/scratch/l/lgai/GTEx_data/Lung_input_plink" # put plink formatted split data here
 #outPath_snp_list = "/u/scratch/l/lgai/GTEx_data/Lung_input_2fat" # snp prior list
