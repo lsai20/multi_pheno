@@ -201,14 +201,14 @@ inPath = "/u/home/l/lgai/multi_pheno/GTEx_data"
 #outPath = "/u/scratch/l/lgai/GTEx_data/Lung_input_plink" # put plink formatted split data here
 #outPath_snp_list = "/u/scratch/l/lgai/GTEx_data/Lung_input_2fat" # snp prior list
 outBase = "Lung1k"
-outPath = "~/multi_pheno/GTEx_data_plink"
+outPath = "/u/home/l/lgai/multi_pheno/GTEx_data_plink"
 outPath_snp_list = outPath
 
 if len(sys.argv) == 1: # if run with no parameters, use tped
 	fixFormat(genoToFix, mapToFilter, inPath, outBase, outPath, outPath_snp_list) #, nonMissingThresh = nonMissingThresh)
 
 elif len(sys.argv) == 2 and sys.argv[1] == "useEMMA":
-    outPath = "~/multi_pheno/GTEx_data_emma"
+    outPath = "/u/home/l/lgai/multi_pheno/GTEx_data_emma"
     outPath_snp_list = outPath
     #outPath = "/u/scratch/l/lgai/GTEx_data/Lung_input_emma" # put plink formatted split data here
     #outPath_snp_list = "/u/scratch/l/lgai/GTEx_data/Lung_input_2fat_rotated" # snp prior list
