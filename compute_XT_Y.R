@@ -4,9 +4,7 @@
 # X, matrix of normalized genotypes, n x m
 # Y, matrix of normalized phenotypes, n x k
 
-# first 1k snps are all from chr 1
-# chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
-
+### FUNCTIONS ###
 # find estimated std error (sigmaHat) for each snp, pheno pair
 # return m x k matrix of sigmaHat's
 findSigmaHats <- function(X,Y){
@@ -42,22 +40,30 @@ findThresholds <- function(alpha, n, SigmaHat){
   return (Thresh)
 }
 
+
+
+### SCRIPT ###
+# first 1k snps are all from chr 1
+# chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
+
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
+expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
 
 Gt<-read.table(snps.txt.file, header=TRUE, sep="", row.names=1)
 Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
 
 G<-t(Gt)
-X<-scale(G)  # standardize genotypes to mean 0, var 1
+X<-scale(G)  # standardize columns (genotypes) to mean 0, var 1
 Y<-t(data.matrix(Yt.df))
 SigmaHat<-findSigmaHats(X,Y)
 Thresh<-findThresholds(alpha=0.05, n=nrow(X), SigmaHat=SigmaHat)
 
 # X^T = m x n, Y = n x k
-# TODO use Beta not Xt_Y
 Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y) #TODO don't compute twice for SigmaHat fxn
+if (TRUE){
+  write.table(Beta, file = "Beta.Rmatrix.tsv", sep="\t")
+}
+Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y) or Beta*n #TODO don't compute twice for SigmaHat fxn
 sigPairs <- which(abs(Xt_Y) > Thresh, arr.ind=TRUE) # indices of sig snp-pheno pairs
 
 # add column names, beta threshold, beta value 
@@ -68,14 +74,14 @@ sigPairs_results <- cbind(sigPairs,
                           )
 colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
-if (false){
+if (FALSE){
   DONE matrixify/normalize G
   DONE convert Y.df to matrix, keep probe labels
   DONE find probes and snps where X^T*Y > thresh
   check whether probes are in correct region
 }
 
-if (false) {
+if (FALSE) {
 # A = U S V^T
 # U, columns are eigenvectors of A*A^T
 # S, Sigma, diagonal matrix of eigenvalues
