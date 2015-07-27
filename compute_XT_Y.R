@@ -4,6 +4,8 @@
 # X, matrix of normalized genotypes, n x m
 # Y, matrix of normalized phenotypes, n x k
 
+setwd('~/Github/multi_pheno')
+
 ### FUNCTIONS ###
 # find estimated std error (sigmaHat) for each snp, pheno pair
 # return m x k matrix of sigmaHat's
@@ -28,18 +30,18 @@ findSigmaHats <- function(X,Y){
 }
 
 
-# find t s.t. |S| > phi-1(alpha/2) iff | X^T*Y[snp,pheno] | >  t
+# find thresholds for Beta_ih (as opposed to S_ih)
+# find t s.t. |S| > phi-1(alpha/2) iff | beta | = | X^T*Y[snp,pheno]/n_ih | >  t
 # return m x k matrix of t's
 # note: input SigmaHat is an m x k matrix of estimated std err
 findThresholds <- function(alpha, n, SigmaHat){
   # different sigmaHat for each snp-phenotype pair
   Sthresh <- qnorm(alpha/2, lower.tail=FALSE) # the threshold if using standardized assoc stat S
-  Thresh <- sqrt(n) * Sthresh * SigmaHat
-  rownames(Thresh)<-rownames(SigmaHat)
-  colnames(Thresh)<-colnames(SigmaHat)
-  return (Thresh)
+  Thresh_Beta <- Sthresh * SigmaHat / sqrt(n)
+  rownames(Thresh_Beta)<-rownames(SigmaHat)
+  colnames(Thresh_Beta)<-colnames(SigmaHat)
+  return (Thresh_Beta)
 }
-
 
 
 ### SCRIPT ###
@@ -47,7 +49,7 @@ findThresholds <- function(alpha, n, SigmaHat){
 # chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
 
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
+expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
 
 Gt<-read.table(snps.txt.file, header=TRUE, sep="", row.names=1)
 Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
@@ -55,30 +57,34 @@ Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
 G<-t(Gt)
 X<-scale(G)  # standardize columns (genotypes) to mean 0, var 1
 Y<-t(data.matrix(Yt.df))
-SigmaHat<-findSigmaHats(X,Y)
-Thresh<-findThresholds(alpha=0.05, n=nrow(X), SigmaHat=SigmaHat)
-
 # X^T = m x n, Y = n x k
 Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-if (TRUE){
+if (FALSE){
   write.table(Beta, file = "Beta.Rmatrix.tsv", sep="\t")
 }
-Xt_Y <- t(X) %*% Y  # same as crossprod(X,Y) or Beta*n #TODO don't compute twice for SigmaHat fxn
-sigPairs <- which(abs(Xt_Y) > Thresh, arr.ind=TRUE) # indices of sig snp-pheno pairs
+
+
+# TODO no pairs cross threshold for alpha=10^-8 in first 30 pheno
+#     and out of 5k phenos, only 50 cross threshold for alpha=10^-8.
+#     does this match expected?
+
+SigmaHat<-findSigmaHats(X,Y)
+Thresh_Beta<-findThresholds(alpha=10^-8, n=nrow(X), SigmaHat=SigmaHat)
+sigPairs <- which(abs(Beta) > Thresh_Beta, arr.ind=TRUE) # indices of sig snp-pheno pairs
 
 # add column names, beta threshold, beta value 
 sigPairs_results <- cbind(sigPairs, 
-                          colnames(Xt_Y)[sigPairs[,2]],
-                          Thresh[sigPairs],
-                          Xt_Y[sigPairs]
+                          colnames(Beta)[sigPairs[,2]],
+                          Thresh_Beta[sigPairs],
+                          Beta[sigPairs]
                           )
 colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
 if (FALSE){
-  DONE matrixify/normalize G
-  DONE convert Y.df to matrix, keep probe labels
-  DONE find probes and snps where X^T*Y > thresh
-  check whether probes are in correct region
+  #DONE matrixify/normalize G
+  #DONE convert Y.df to matrix, keep probe labels
+  #DONE find probes and snps where X^T*Y > thresh
+  #check whether probes are in correct region
 }
 
 if (FALSE) {
