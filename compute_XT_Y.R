@@ -80,6 +80,18 @@ sigPairs_results <- cbind(sigPairs,
                           )
 colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
+
+Beta_123 <- Beta[,1]
+# TODO is this right? phi^-1(Beta_ih * sqrt(n) / Sigma_ih)
+pvals <- pnorm(Beta_123[,1] * sqrt(nrow(X)) / SigmaHat[,1])
+Beta_123 <- cbind(Beta_123, pvals)
+
+#TODO don't think i'm getting orig snp no - has beta already been sorted somewhere?
+origSnpNo <- order(Beta_123[,2]) # orig snp no
+Beta_123 <- Beta_123[order(Beta_123[,2]),] # sort by pval
+Beta_123 <- cbind(Beta_123, origSnpNo)
+colnames(Beta_123)
+
 if (FALSE){
   #DONE matrixify/normalize G
   #DONE convert Y.df to matrix, keep probe labels
