@@ -19,7 +19,7 @@ findSigmaHats <- function(X,Y){
   # for one h,i pair
   for (i in 1:m){
     for (h in 1:k){
-      e_hi <- Y[,h] - Beta[i,h]*X[,i] # 1 x n vector of residuals 
+      e_hi <- Y[,h] - Beta[i,h] * X[,i] # 1 x n vector of residuals
         # ^also note mean of Y_h is 0
       SigmaHat[i,h] <- sqrt( crossprod(e_hi) / (n-2) )
     }
@@ -43,7 +43,11 @@ findThresholds <- function(alpha, n, SigmaHat){
   return (Thresh_Beta)
 }
 
-
+pnorm(0.05, lower.tail=FALSE)
+pnorm(1, lower.tail=FALSE)
+pnorm(10, lower.tail=FALSE)
+qnorm(0.05, lower.tail=FALSE)
+qnorm(0.95, lower.tail=FALSE)
 ### SCRIPT ###
 # first 1k snps are all from chr 1
 # chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
@@ -83,18 +87,22 @@ colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
 Beta_123 <- as.matrix(Beta[,1])
 rownames(Beta_123)<-rownames(Beta)
-colnames(Beta_123)<-colnames(Beta)[1]
-# TODO is this right? phi^-1(Beta_ih * sqrt(n) / Sigma_ih)
-pvals <- pnorm(Beta_123[,1] * sqrt(nrow(X)) / SigmaHat[,1])
+colnames(Beta_123)<-colnames(Beta)[1] 
+S<-Beta_123[,1] * sqrt(nrow(X)) / SigmaHat[,1]
+#phi_inverse <- pnorm(Beta_123[,1] / sqrt(nrow(X)) * SigmaHat[,1]) 
+# pval !=  phi^-1(     Beta_ih * sqrt(n) / Sigma_ih) 
+# pval = 2*phi^-1(abs(Beta_ih) * sqrt(n) / Sigma_ih)
+pvals <- 2*pnorm(abs(Beta_123[,1]) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
 Beta_123 <- cbind(Beta_123, pvals)
-Beta_123 <- cbind(Beta_123, c(1:nrow(Beta_123))) # add row index pre-sorting
+snpNo <- c(1:nrow(Beta_123))
+Beta_123 <- cbind(snpNo, Beta_123) # add row index pre-sorting
+#Beta_123 <- Beta_123[order(Beta_123[,2]),] # sort by pval
 
-#TODO don't think i'm getting orig snp no - has beta already been sorted somewhere?
-origSnpNo <- order(Beta[,2]) # orig snp no
-Beta_123 <- Beta_123[order(Beta_123[,2]),] # sort by pval
-Beta_123 <- cbind(Beta_123, origSnpNo)
+if (FALSE){
+  write.table(Beta_123, file = "Beta_first_gene.Rmatrix.tsv", sep="\t")
+}
 
-colnames(Beta_123)
+
 
 if (FALSE){
   #DONE matrixify/normalize G
