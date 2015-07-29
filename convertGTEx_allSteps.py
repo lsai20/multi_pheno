@@ -1,5 +1,8 @@
 # Process GTEx data into plink format
 
+# TODO should not have two genos per emma. 
+# also redundant with the version in grat_proj, except paths/input/output changed
+
 # This script will:
 #   tfam - remove header for genotype files and convert to .tfam for each chunk
 # 	map and tped - write only 1000 snps per file
