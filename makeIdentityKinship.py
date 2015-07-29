@@ -5,7 +5,7 @@ import sys
 def writeIdentity(outfName, N):
 	with open(outfName, 'w') as outf:
 		for i in range(N):
-			lineL = ['0' for i in range(N)]
+			lineL = ['0' for j in range(N)]
 			lineL[i] = '1'
 			outf.write('\t'.join(lineL) + '\n')
 
