@@ -49,7 +49,7 @@ findThresholds <- function(alpha, n, SigmaHat){
 # chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
 
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
+expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
 
 Gt<-read.table(snps.txt.file, header=TRUE, sep="", row.names=1)
 Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
@@ -81,15 +81,19 @@ sigPairs_results <- cbind(sigPairs,
 colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
 
 
-Beta_123 <- Beta[,1]
+Beta_123 <- as.matrix(Beta[,1])
+rownames(Beta_123)<-rownames(Beta)
+colnames(Beta_123)<-colnames(Beta)[1]
 # TODO is this right? phi^-1(Beta_ih * sqrt(n) / Sigma_ih)
 pvals <- pnorm(Beta_123[,1] * sqrt(nrow(X)) / SigmaHat[,1])
 Beta_123 <- cbind(Beta_123, pvals)
+Beta_123 <- cbind(Beta_123, c(1:nrow(Beta_123))) # add row index pre-sorting
 
 #TODO don't think i'm getting orig snp no - has beta already been sorted somewhere?
-origSnpNo <- order(Beta_123[,2]) # orig snp no
+origSnpNo <- order(Beta[,2]) # orig snp no
 Beta_123 <- Beta_123[order(Beta_123[,2]),] # sort by pval
 Beta_123 <- cbind(Beta_123, origSnpNo)
+
 colnames(Beta_123)
 
 if (FALSE){
