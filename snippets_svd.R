@@ -1,12 +1,12 @@
 # uses some functions from compute_XT_Y.R (import manually for now)
 
 if (FALSE){
-# svd example
-X <- replicate(10000, rnorm(2000)) 
-s <- svd(X)
-D <- diag(s$d)
-X2 <- s$u %*% D %*% t(s$v) #  X = U D V'
-D2 <- t(s$u) %*% X %*% s$v #  D = U' X V
+  # svd example
+  X <- replicate(10000, rnorm(2000)) 
+  s <- svd(X)
+  D <- diag(s$d)
+  X2 <- s$u %*% D %*% t(s$v) #  X = U D V'
+  D2 <- t(s$u) %*% X %*% s$v #  D = U' X V
 }
 
 
