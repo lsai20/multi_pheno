@@ -1,62 +1,138 @@
-# uses some functions from compute_XT_Y.R (import manually for now)
+# say there are n indiv, m snp, k probes. for real data, m >> k
 
-if (FALSE){
-# svd example
-X <- replicate(10000, rnorm(2000)) 
-s <- svd(X)
-D <- diag(s$d)
-X2 <- s$u %*% D %*% t(s$v) #  X = U D V'
-D2 <- t(s$u) %*% X %*% s$v #  D = U' X V
+# THIS IS A COPY OF COMPUTE_XT_Y WITH A FEW MODS FOR SVD
+# merge the two files or separate out the shared parts later
+
+# G, data frame of 0/1/2 genotypes, n x m
+# X, matrix of normalized genotypes, n x m
+# Y, matrix of normalized phenotypes, n x k
+
+setwd('~/Github/multi_pheno')
+
+### FUNCTIONS ###
+# find estimated std error (sigmaHat) for each snp, pheno pair
+# return m x k matrix of sigmaHat's
+# TODO Beta now passed in, not computed from X,Y in function body
+findSigmaHats <- function(X,Y, Beta){
+  n<-nrow(X)
+  m<-ncol(X)
+  k<-ncol(Y)
+  SigmaHat <- matrix(data=NA, nrow=m, ncol=k)
+  # nested for loop probably bad R
+  # for one h,i pair
+  for (i in 1:m){
+    for (h in 1:k){
+      e_hi <- Y[,h] - Beta[i,h] * X[,i] # 1 x n vector of residuals
+      # ^also note mean of Y_h is 0
+      SigmaHat[i,h] <- sqrt( crossprod(e_hi) / (n-2) )
+    }
+  }
+  rownames(SigmaHat)<-colnames(X)
+  colnames(SigmaHat)<-colnames(Y)
+  return (SigmaHat)
 }
 
 
-# Compare timing of svd and X^T*Y
-# Use a very rectangular matrix, typical for GE data
-n <- 10; m <- 5000; k <- 500
-X <- replicate(m, rnorm(n))  # n x m
-Y <- replicate(k, rnorm(n))  # n x k
+# find thresholds for Beta_ih (as opposed to S_ih)
+# find t s.t. |S| > phi-1(alpha/2) iff | beta | = | X^T*Y[snp,pheno]/n_ih | >  t
+# return m x k matrix of t's
+# note: input SigmaHat is an m x k matrix of estimated std err
+findThresholds <- function(alpha, n, SigmaHat){
+  # different sigmaHat for each snp-phenotype pair
+  Sthresh <- qnorm(alpha/2, lower.tail=FALSE) # the threshold if using standardized assoc stat S
+  Thresh_Beta <- Sthresh * SigmaHat / sqrt(n)
+  rownames(Thresh_Beta)<-rownames(SigmaHat)
+  colnames(Thresh_Beta)<-colnames(SigmaHat)
+  return (Thresh_Beta)
+}
 
-# SVD, default
-t0 <- proc.time()
-s <- svd(X)
-t1 <- proc.time()
-svdTime <- t1-t0
+### SCRIPT ###
+# first 1k snps are all from chr 1
+# chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
 
-#SVD, 1 component
-t0 <- proc.time()
-s1 <- svd(X, nu=1, nv=1)
-t1 <- proc.time()
-svd1Time <- t1-t0
+snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
+expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
 
-# SVD, full
-t0 <- proc.time()
-s <- svd(X, nu=1000, nv=5000)
-t1 <- proc.time()
-svdFullTime <- t1-t0
+Gt<-read.table(snps.txt.file, header=TRUE, sep="", row.names=1)
+Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
 
-# SVD, default, transpose
-Xt <- t(X)
-t0 <- proc.time()
-s <- svd(Xt)
-t1 <- proc.time()
-svdTransTime <- t1-t0
+G<-t(Gt)
+X<-scale(G)  # standardize columns (genotypes) to mean 0, var 1
+Y<-t(data.matrix(Yt.df))
+# X^T = m x n, Y = n x k
+### instead of cross prod, to get Beta, use SVD ###
+#Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
+svdX <- svd(X, nu=1, nv=5)
+dim(svdX$u); dim(diag(svdX$d)); dim(svdX$v)
+Dx <- diag(svdX$d)
+X2 <- svdX$u %*% Dx %*% t(svdX$v) #  X = U D V'
 
-# X^T * Y (cross prod)
-t0 <- proc.time()
-xty <- crossprod(X,Y)
-t1 <- proc.time()
-xtyTime <- t1-t0
+svdY <- svd(Y, nu=7,nv=9)
+dim(svdY$u); dim(diag(svdY$d)); dim(svdY$v)
+Dy <- diag(svdY$d)
+Y2 <- svdY$u %*% Dy %*% t(svdY$v)
 
-# X^T * Y (tranpose X, then times Y)
-t0 <- proc.time()
-xty2 <- t(X) %*% Y
-t1 <- proc.time()
-xty2Time <- t1-t0
+u1 <- svdX$u
+v1 <- Dx %*% t(svdX$v)
+u2 <- svdY$u
+v2 <- Dy %*% t(svdY$v)
+
+dim(u1); dim(v1); dim(u2); dim(v2)
+
+Beta_true = crossprod(X,Y)
+Beta_1 = t(v1) %*% t(u1) %*% u2 %*% v2
+Beta_2 = crossprod(X2, Y2)
+rownames(Beta_2) <- rownames(Beta_true); colnames(Beta_2) <- colnames(Beta_true)
+
+if (FALSE){
+  write.table(Beta, file = "Beta.Rmatrix.tsv", sep="\t")
+}
 
 
-print(svdTime)
-print(svd1Time)
-print(svdFullTime)
-print(svdTransTime)
-print(xtyTime)
-print(xty2Time)
+# TODO no pairs cross threshold for alpha=10^-8 in first 30 pheno
+#     and out of 5k phenos, only 50 cross threshold for alpha=10^-8.
+#     does this match expected?
+
+SigmaHat<-findSigmaHats(X,Y,Beta)
+Thresh_Beta<-findThresholds(alpha=10^-8, n=nrow(X), SigmaHat=SigmaHat)
+sigPairs <- which(abs(Beta) > Thresh_Beta, arr.ind=TRUE) # indices of sig snp-pheno pairs
+
+# add column names, beta threshold, beta value 
+sigPairs_results <- cbind(sigPairs, 
+                          colnames(Beta)[sigPairs[,2]],
+                          Thresh_Beta[sigPairs],
+                          Beta[sigPairs]
+)
+colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
+
+
+Beta_123 <- as.matrix(Beta[,1])
+rownames(Beta_123)<-rownames(Beta)
+colnames(Beta_123)<-colnames(Beta)[1] 
+S<-Beta_123[,1] * sqrt(nrow(X)) / SigmaHat[,1]
+#phi_inverse <- pnorm(Beta_123[,1] / sqrt(nrow(X)) * SigmaHat[,1]) 
+# pval !=  phi^-1(     Beta_ih * sqrt(n) / Sigma_ih) 
+# pval = 2*phi^-1(abs(Beta_ih) * sqrt(n) / Sigma_ih)
+pvals <- 2*pnorm(abs(Beta_123[,1]) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
+Beta_123 <- cbind(Beta_123, pvals)
+snpNo <- c(1:nrow(Beta_123))
+Beta_123 <- cbind(snpNo, Beta_123) # add row index pre-sorting
+#Beta_123 <- Beta_123[order(Beta_123[,2]),] # sort by pval
+
+if (FALSE){
+  write.table(Beta_123, file = "Beta_first_gene.Rmatrix.tsv", sep="\t")
+}
+
+if (FALSE){
+  #DONE matrixify/normalize G
+  #DONE convert Y.df to matrix, keep probe labels
+  #DONE find probes and snps where X^T*Y > thresh
+  #check whether probes are in correct region
+}
+
+if (FALSE) {
+  # A = U S V^T
+  # U, columns are eigenvectors of A*A^T
+  # S, Sigma, diagonal matrix of eigenvalues
+  # V, columns are eigenvectors of A^T*A
+}
