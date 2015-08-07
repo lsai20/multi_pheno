@@ -62,10 +62,19 @@ Y<-t(data.matrix(Yt.df))
 # X^T = m x n, Y = n x k
 ### instead of cross prod, to get Beta, use SVD ###
 #Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-svdX <- svd(X, nu=1, nv=5)
-dim(svdX$u); dim(diag(svdX$d)); dim(svdX$v)
-Dx <- diag(svdX$d)
+svdX <- svd(X, nu=110, nv=70)
+#dim(svdX$u); dim(diag(svdX$d)); dim( t(svdX$v))
+#Dx <- diag(svdX$d)
+Dx <- t(svdX$u) %*% X %*% svdX$v # D = U' X V
 X2 <- svdX$u %*% Dx %*% t(svdX$v) #  X = U D V'
+rownames(X2)<-rownames(X2); colnames(X2)<-colnames(X)
+Beta <- crossprod(X2, Y)
+Beta_true <- crossprod(X,Y)
+
+
+SigmaHat<-findSigmaHats(X,Y,Beta)
+pvals <- 2*pnorm(abs(Beta) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
+pvals_true <- 2*pnorm(abs(Beta_true) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
 
 svdY <- svd(Y, nu=7,nv=9)
 dim(svdY$u); dim(diag(svdY$d)); dim(svdY$v)
