@@ -59,22 +59,27 @@ Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
 G<-t(Gt)
 X<-scale(G)  # standardize columns (genotypes) to mean 0, var 1
 Y<-t(data.matrix(Yt.df))
+
+n<-nrow(X)
+m<-ncol(X)
+k<-ncol(Y)
+
 # X^T = m x n, Y = n x k
 ### instead of cross prod, to get Beta, use SVD ###
 #Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-svdX <- svd(X, nu=110, nv=70)
+svdX <- svd(X, nu=110, nv=110)
 #dim(svdX$u); dim(diag(svdX$d)); dim( t(svdX$v))
 #Dx <- diag(svdX$d)
 Dx <- t(svdX$u) %*% X %*% svdX$v # D = U' X V
 X2 <- svdX$u %*% Dx %*% t(svdX$v) #  X = U D V'
 rownames(X2)<-rownames(X2); colnames(X2)<-colnames(X)
-Beta <- crossprod(X2, Y)
-Beta_true <- crossprod(X,Y)
+Beta_svd <- crossprod(X2, Y)/n
+Beta_true <- crossprod(X,Y)/n
 
 
-SigmaHat<-findSigmaHats(X,Y,Beta)
-pvals <- 2*pnorm(abs(Beta) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
-pvals_true <- 2*pnorm(abs(Beta_true) * sqrt(nrow(X)) / SigmaHat[,1], lower.tail=FALSE)
+SigmaHat_true<-findSigmaHats(X,Y,Beta_true)
+pvals_svd <- 2*pnorm(abs(Beta_svd) * sqrt(nrow(X)) / SigmaHat_true, lower.tail=FALSE)
+pvals_true <- 2*pnorm(abs(Beta_true[,1]) * sqrt(n) / SigmaHat_true, lower.tail=FALSE)
 
 svdY <- svd(Y, nu=7,nv=9)
 dim(svdY$u); dim(diag(svdY$d)); dim(svdY$v)
