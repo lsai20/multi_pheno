@@ -12,14 +12,14 @@ if (FALSE){
 
 # Compare timing of svd and X^T*Y
 # Use a very rectangular matrix, typical for GE data
-n <- 10; m <- 10000; k <- 200
-# R freezes with n <- 10; m <- 1000000; k <- 2000
+n <- 10; m <- 5000; k <- 200
+# real values n100; m 10,000,000; k 20,000 but R freezes
 X <- replicate(m, rnorm(n))  # n x m
 Y <- replicate(k, rnorm(n))  # n x k
 
-# SVD, no components
+# SVD, no U or V
 t0 <- proc.time()
-s <- svd(X)
+s <- svd(X, nu=0, nv=0)
 t1 <- proc.time()
 svdTime <- t1-t0
 
@@ -29,9 +29,9 @@ s1 <- svd(X, nu=1, nv=1)
 t1 <- proc.time()
 svd1Time <- t1-t0
 
-# SVD, full
+# SVD, more components
 t0 <- proc.time()
-s <- svd(X, nu=1000, nv=5000)
+s <- svd(X, nu=100, nv=500)
 t1 <- proc.time()
 svdFullTime <- t1-t0
 
