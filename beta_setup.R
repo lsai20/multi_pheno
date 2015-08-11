@@ -77,3 +77,13 @@ findSigPairs <- function(Beta, Thresh_Beta){
   colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
   return sigPairs_results
 }
+
+
+# find pvals (using Beta and SigmaHat to find ncp)
+findPvals <- function(Beta, SigmaHat, n){
+  # Note assoc stat S =  Beta * sqrt(n)/SigmaHat
+  # Note pval = 2 * phi(|Beta|*sqrt(n)/SigmaHat)
+  Pvals <- 2*pnorm(abs(Beta) * sqrt(n) / SigmaHat, lower.tail=FALSE)
+  return (Pvals) # return matrix of pvals
+}
+
