@@ -11,27 +11,25 @@ setwd('~/Github/multi_pheno')
 
 ### FUNCTIONS ###
 
-importData<-function(){
+importX<-function(snps.txt.file){ # return standardized genotypes
   # first 1k snps are all from chr 1
   # chr 1 has 2k genes, chr 2 has 3k so hopefully result within first 5k 
-  snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-  expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
-  
   Gt<-read.table(snps.txt.file, header=TRUE, sep="", row.names=1)
-  Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
-  
   G<-t(Gt)
   X<-scale(G)  # standardize columns (genotypes) to mean 0, var 1
+  return (X)
+}
+
+importY<-function(expr.txt.file){
+  Yt.df<-read.table(expr.txt.file, header=TRUE, sep="", row.names=1)
   Y<-t(data.matrix(Yt.df))
-  return (X,Y)
+  return (Y)
 }
 
 # find estimated std error (sigmaHat) for each snp, pheno pair
 # return m x k matrix of sigmaHat's
 findSigmaHats <- function(X,Y){
-  n<-nrow(X)
-  m<-ncol(X)
-  k<-ncol(Y)
+  n<-nrow(X); m<-ncol(X); k<-ncol(Y)
   Beta <- crossprod(X,Y)/n  # m x k matrix of betas
   SigmaHat <- matrix(data=NA, nrow=m, ncol=k)
   # nested for loop probably bad R
@@ -74,8 +72,8 @@ findSigPairs <- function(Beta, Thresh_Beta){
               Thresh_Beta[sigPairs],
               Beta[sigPairs]
               )
-  colnames(sigPairs_results)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
-  return sigPairs_results
+  colnames(sigPairs)<-c("row", "col", "pheno", "threshold_ih","beta_ih")
+  return (sigPairs)
 }
 
 
