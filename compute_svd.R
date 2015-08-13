@@ -1,22 +1,33 @@
+# computes/approximates Beta using SVD
+# see beta_setup.R for additional fxns/reading input
+
+snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
+expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
+
+X<-importX(snps.txt.file)
+Y<-importY(expr.txt.file)
+
 # say there are n indiv, m snp, k probes. for real data, m >> k
-
-
-
 n<-nrow(X); m<-ncol(X); k<-ncol(Y)
 
-# X^T = m x n, Y = n x k
-### instead of cross prod, to get Beta, use SVD ###
-#Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-svdX <- svd(X, nu=110, nv=110)
-#dim(svdX$u); dim(diag(svdX$d)); dim( t(svdX$v))
-#Dx <- diag(svdX$d)
-Dx <- t(svdX$u) %*% X %*% svdX$v # D = U' X V
-X2 <- svdX$u %*% Dx %*% t(svdX$v) #  X = U D V'
-rownames(X2)<-rownames(X2); colnames(X2)<-colnames(X)
-Beta_svd <- crossprod(X2, Y)/n
-Beta_true <- crossprod(X,Y)/n
+# say we use b components to approximate X (exact is b = min(n))
+# and c components to approximate Y
+b<-10
+c<-0
 
-svdY <- svd(Y, nu=7,nv=9)
+### instead of cross prod, to get Beta, use SVD ###
+svdX <- svd(X, nu=w, nv=w) #  X = U D V'
+Dx <- diag(svdX$d[1:w])
+dim(svdX$u); dim(Dx); dim(t(svdX$v))
+
+X2 <- svdX$u %*% Dx %*% t(svdX$v)
+Beta_svd <- crossprod(X2, Y)/n
+SigmaHat_svd<-findSigmaHats(X2,Y)
+Pvals_svd<-findPvals(Beta_svd, SigmaHat, n)
+
+
+# TODO use svd of Y or not?
+svdY <- svd(Y, nu=7, nv=9)
 dim(svdY$u); dim(diag(svdY$d)); dim(svdY$v)
 Dy <- diag(svdY$d)
 Y2 <- svdY$u %*% Dy %*% t(svdY$v)

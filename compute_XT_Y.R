@@ -1,6 +1,6 @@
 # compute Beta using matrix multiplication
 # code for input and shared functions is in input.R
-### SCRIPT ###
+
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
 expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
 
