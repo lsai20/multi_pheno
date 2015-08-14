@@ -1,5 +1,6 @@
 # computes/approximates Beta using SVD
 # see beta_setup.R for additional fxns/reading input
+library(reshape2) # for melt
 
 snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
 expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
@@ -25,12 +26,14 @@ Beta_svd <- crossprod(X2, Y)/n
 SigmaHat_svd<-findSigmaHats(X2,Y)
 Pvals_svd<-findPvals(Beta_svd, SigmaHat_svd, n)
 
+# TODO add rownames to pvals_svd
 
 # TODO sort and pick top x% of snp-pheno pairs by pval
 # (todo later - sort and pick by svd threshold, see how many cross true thresh)
 
-
-
+# make dataframe of snp, pheno, pval
+Pvals_long<-melt(Pvals_svd, id.vars=1:2)
+Pvals_long2<-melt(Pvals_svd)
 # TODO use svd of Y or not?
 svdY <- svd(Y, nu=c, nv=c)
 Dy <- diag(svdY$d[1:c])

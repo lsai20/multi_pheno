@@ -26,7 +26,7 @@ importY<-function(expr.txt.file){
   return (Y)
 }
 
-# find estimated std error (sigmaHat) for each snp, pheno pair
+# find estimated std error (sigmaHat) for each snp-pheno pair
 # return m x k matrix of sigmaHat's
 findSigmaHats <- function(X,Y){
   n<-nrow(X); m<-ncol(X); k<-ncol(Y)
@@ -46,6 +46,12 @@ findSigmaHats <- function(X,Y){
   return (SigmaHat)
 }
 
+# TODO find est sigmaHat with matrix ops or somehow faster 
+# TODO find estimated std error (sigmaHat) for phenotype
+# instead of one for each each snp-pheno pair
+# return length k vector of sigmaHat's
+findSigmaHatsByPheno <- function(X,Y){
+}
 
 # find thresholds for Beta_ih (as opposed to S_ih)
 # find t s.t. |S| > phi-1(alpha/2) iff | beta | = | X^T*Y[snp,pheno]/n_ih | >  t
