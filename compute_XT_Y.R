@@ -3,7 +3,7 @@
 
 library(reshape2)
 
-snps.txt.file<-"GTEx_data/Lung10k.snps.txt" 
+snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
 expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
 
 X<-importX(snps.txt.file)
