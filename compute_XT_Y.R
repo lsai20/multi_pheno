@@ -3,8 +3,8 @@
 
 library(reshape2)
 
-snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
+snps.txt.file<-"GTEx_data/Lung10k.snps.txt" 
+expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
 
 X<-importX(snps.txt.file)
 Y<-importY(expr.txt.file)
@@ -26,11 +26,14 @@ Beta_long<-melt(Beta, id.vars=1)
 Pvals_long<-melt(Pvals, id.vars=1)
 Results_xty <- cbind(Beta_long, Pvals_long[,3])
 colnames(Results_xty) <- c("snpID", "gene", "beta_true", "pval_true")
+rm("Beta_long, Pvals_long") # rm once they are in Results_xty
 
 # sort snp-pheno pairs by pval
+# commented out bc sort the combined results instead
+if (FALSE){
 Results_xty_sorted<-Results_xty[order(Results_xty$pval),]
 rownames(Results_xty_sorted)<-NULL
-
+}
 
 ## examine first gene ##
 if (FALSE) {

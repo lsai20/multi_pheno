@@ -5,7 +5,7 @@ library(reshape2) # for melt
 
 # TODO for full file, will have to window X and/or Y
 snps.txt.file<-"GTEx_data/Lung10k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
+expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
 
 X<-importX(snps.txt.file)
 Y<-importY(expr.txt.file)
@@ -39,26 +39,60 @@ Beta_long<-melt(Beta_svd, id.vars=1)
 Pvals_long<-melt(Pvals_svd, id.vars=1)
 Results_svd <- cbind(Beta_long, Pvals_long[,3])
 colnames(Results_svd) <- c("snpID", "gene", "beta_svd", "pval_svd")
+rm("Beta_long, Pvals_long") # rm once they are in Results_svd
 
 # sort snp-pheno pairs by pval
+# commented out bc sort the combined results instead
+if (FALSE){
 Results_svd_sorted<-Results_svd[order(Results_svd$pval),]
 rownames(Results_svd_sorted)<-NULL
+}
+
+### Compare to results of X^T*Y method ###
 
 # attach "true" (X^T*Y) beta and pvals to df
+# get percentiles
+Results_all<-cbind(Results_svd, 
+                   Results_xty[,3:4],
+                   rank(Results_svd$pval_svd)*100/(m*k),
+                   rank(Results_xty$pval_true)*100/(m*k)
+                  )
+colnames(Results_all)[7] <- "percentile_pval_svd"
+colnames(Results_all)[8] <- "percentile_pval_true"
+
+
+# get rank instead of percentiles
+if (FALSE){
 Results_all<-cbind(Results_svd, 
                    Results_xty[,3:4],
                    rank(Results_svd$pval_svd),
                    rank(Results_xty$pval_true)
-                   )
+)
 colnames(Results_all)[7] <- "rank_pval_svd"
 colnames(Results_all)[8] <- "rank_pval_true"
+}
+
+if(FALSE){
+write.table(Results_all, file = "Results_svdX70_8-17-15.Rmatrix")
+}
 
 # Pick top percent_true of snp-pheno pairs by true pval
 # Are they ranked highly by svd pval as well?
-topTrue <- Results_all[which(Results_all$rank_pval_true <= percent_true*m),]
+topTrue <- Results_all[which(Results_all$rank_pval_true <= percent_true*m*k),]
 topTrue <- topTrue[order(topTrue$rank_pval_true),]
 
-# TODO get percentiles instead of rank
+# plotting
+if(FALSE){
+# scatter plot, #000000 with 0x33 = 3/16 opacity
+#plot(topTrue$pval_true, topTrue$pval_svd, col="#00000033")
+library(ggplot2)
+library(hexbin)
+#ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + stat_binhex()
+plot(hexbin(topTrue$pval_true, topTrue$pval_svd))
+plot(hexbin(Results_all$pval_true, Results_all$pval_svd))
+ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + stat_binhex()
+ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.1)
+}
 
 # (TODO later - sort and pick by svd threshold, see how many cross true thresh)
 # (TODO get theoretical thresh)
