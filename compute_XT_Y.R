@@ -26,7 +26,7 @@ Beta_long<-melt(Beta, id.vars=1)
 Pvals_long<-melt(Pvals, id.vars=1)
 Results_xty <- cbind(Beta_long, Pvals_long[,3])
 colnames(Results_xty) <- c("snpID", "gene", "beta_true", "pval_true")
-rm("Beta_long, Pvals_long") # rm once they are in Results_xty
+rm("Beta_long", "Pvals_long") # rm once they are in Results_xty
 
 # sort snp-pheno pairs by pval
 # commented out bc sort the combined results instead
