@@ -14,7 +14,7 @@ Y<-importY(expr.txt.file)
 n<-nrow(X); m<-ncol(X); k<-ncol(Y)
 
 # test whether top percent_true snps are in top percent_svd snps
-percent_svd <- 5 # percentile ranges 0-100, not 0-1
+percent_svd <- 5 # use percentile ranges 0-100, not 0-1
 percent_true <- 1
 
 
@@ -96,10 +96,13 @@ library(hexbin)
 #ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + stat_binhex()
 plot(hexbin(topTrue$pval_true, topTrue$pval_svd))
 plot(hexbin(Results_all$pval_true, Results_all$pval_svd))
-ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + stat_binhex()
-ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.2) + theme_light()
+ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + stat_binhex()
+ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.2) + theme_light() + ggtitle("top 1% true p-value")
+ggplot(topTrue,aes(x=percentile_pval_true,y=percentile_pval_svd)) + geom_point(alpha = 0.2) + theme_light() + ggtitle("SVD vs true percentile for top 1% true p-value")
+
 smoothScatter(topTrue$pval_true, topTrue$pval_svd, nbin=500, nrpoints=500)
 
+ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.1) + theme_light() + ggtitle("SVD vs true pval for all snp-pheno pairs")
 
 #http://stackoverflow.com/questions/14271584/
 # r-legend-for-color-density-scatterplot-
