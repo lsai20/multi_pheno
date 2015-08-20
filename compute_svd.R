@@ -39,7 +39,7 @@ Beta_long<-melt(Beta_svd, id.vars=1)
 Pvals_long<-melt(Pvals_svd, id.vars=1)
 Results_svd <- cbind(Beta_long, Pvals_long[,3])
 colnames(Results_svd) <- c("snpID", "gene", "beta_svd", "pval_svd")
-rm("Beta_long, Pvals_long") # rm once they are in Results_svd
+rm("Beta_long", "Pvals_long") # rm once they are in Results_svd
 
 # sort snp-pheno pairs by pval
 # commented out bc sort the combined results instead
@@ -87,50 +87,6 @@ topTrue <- Results_all[which(Results_all$percentile_pval_true <= percent_true),]
 topTrue <- topTrue[order(topTrue$pval_true),]
 topTrue <- topTrue[order(topTrue$pval_svd, decreasing=T),]
 
-# plotting
-if(FALSE){
-# scatter plot, #000000 with 0x33 = 3/16 opacity
-#plot(topTrue$pval_true, topTrue$pval_svd, col="#00000033")
-library(ggplot2)
-library(hexbin)
-#ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + stat_binhex()
-plot(hexbin(topTrue$pval_true, topTrue$pval_svd))
-plot(hexbin(Results_all$pval_true, Results_all$pval_svd))
-ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + stat_binhex()
-ggplot(topTrue,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.2) + theme_light() + ggtitle("top 1% true p-value")
-ggplot(topTrue,aes(x=percentile_pval_true,y=percentile_pval_svd)) + geom_point(alpha = 0.2) + theme_light() + ggtitle("SVD vs true percentile for top 1% true p-value")
-
-smoothScatter(topTrue$pval_true, topTrue$pval_svd, nbin=500, nrpoints=500)
-
-ggplot(Results_all,aes(x=pval_true,y=pval_svd)) + geom_point(alpha = 0.1) + theme_light() + ggtitle("SVD vs true pval for all snp-pheno pairs")
-
-#http://stackoverflow.com/questions/14271584/
-# r-legend-for-color-density-scatterplot-
-# produced-using-smoothscatter
-library(fields)
-smoothScatterLegend <- function(){
-  xm <- get('xm', envir = parent.frame(1))
-  ym <- get('ym', envir = parent.frame(1))
-  z  <- get('dens', envir = parent.frame(1))
-  colramp <- get('colramp', parent.frame(1))
-  image.plot(xm,ym,z, col = colramp(256), legend.only = T, add =F)  
-}
-
-oldpar <- par()
-par(mar = c(5,4,4,5.5) + .1)
-
-smoothScatter(topTrue$pval_true, topTrue$pval_svd, nrpoints=500, 
-              postPlotHook=smoothScatterLegend)
-title("svdX100 smoothScatter( ... nrpoints=500, 
-              postPlotHook=smoothScatterLegend)")
-dev.off()
-smoothScatter(Results_all$pval_true, Results_all$pval_svd, nrpoints=500, 
-              postPlotHook=smoothScatterLegend)
-title("svdX119 smoothScatter(..., nrpoints=500, 
-              postPlotHook=smoothScatterLegend)")
-}
-
-#dev.off()
 
 # (TODO later - sort and pick by svd threshold, see how many cross true thresh)
 # (TODO get theoretical thresh)
