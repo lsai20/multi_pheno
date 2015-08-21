@@ -1,28 +1,10 @@
-# for varying rank, find 99% RR thresh
-
+# find 99% thresh 
+# i.e. thresh for pval_svd st. pval_svd < thresh contains any 99% of true
+# (so if 100 true vals, want lowest thresh that gets any 99, not top 99)
+library(reshape2)
 
 RR_target = 0.50    # target recall rate
 thresh_true = 10^-3 # desired threshold
-rank_X = 100        # rank of svdX (exact is 119)
-
-# TODO 
-# given svd X of particular rank,
-# given pval_svd and pval_true for each snp-pheno pair,
-# find 99% thresh (i.e. thresh for pval_svd st. pval_svd < thresh contains 99% of true)
-
-# eventually for loop for rank_X ranging 1 to 119
-#want 99% of true pvals to have p_svd within thresh_svd
-#any 99% of true pvals ok. (i.e if 100 true vals, want lowest thresh that gets any 99, not top 99)
-
-# TODO
-# test on small data set - 1k snp, 30 pheno
-snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-expr.txt.file<-"GTEx_data/Lung30.expr.txt"
-
-
-
-#topTrue <- Results_all[which(Results_all$pval_true <= thresh_true),]
-#topTrue <- topTrue[order(topTrue$pval_svd, decreasing=T),] # biggest pval_svd first
 
 # finds minimum pval_svd needed to achieve recall rate, for given rank
 findThreshSvd_oneRank <- function(topTrue, RR_target, thresh_true){
@@ -47,21 +29,22 @@ findThreshSvd_oneRank <- function(topTrue, RR_target, thresh_true){
 }
 
 
-findThreshSvd_multiRank <- function(RR_target,    # target recall rate
-                                    thresh_true ){
+# Find threshold and correlation for multiple ranks
+# (Note: if only examining top true pvals, discard other values early to save time)
+# (cbind of all snp-pheno take much longer than cbind for only a few snp-pheno)
+findThreshSvd_multiRank <- function(RR_target, thresh_true){
   ThreshSvd <- vector(,119)
-  CorrSvdTrue <- vector(,119)
+  Corr_top <- vector(,119) # cor(pval_svd, pval_true) of snp-pheno that cross thresh
+  Corr_all <- vector(,119) # cor(...) of all snp-pheno
+  
   # find XT_Y values 
   snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
   expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
-  
   X<-importX(snps.txt.file)
   Y<-importY(expr.txt.file)
-  
   n<-nrow(X); m<-ncol(X); k<-ncol(Y) # X^T = m x n, Y = n x k
   
   Beta <- crossprod(X,Y)/nrow(X)  # m x k matrix of betas
-  if (FALSE){write.table(Beta, file = "Beta.Rmatrix.tsv", sep="\t")}
   
   # find sigma, pvals, thresholds
   SigmaHat<-findSigmaHats(X,Y)
@@ -75,9 +58,10 @@ findThreshSvd_multiRank <- function(RR_target,    # target recall rate
   colnames(Results_xty) <- c("snpID", "gene", "beta_true", "pval_true")
  
   topTrueInds <- which(Results_xty$pval_true <= thresh_true) 
-  Results_xty <- Results_xty[topTrueInds,] # TODO only use top vals here
+  #Results_xty <- Results_xty[topTrueInds,]
   
   # find SVD values for each rank, then find thresh_svd
+  # TODO sapply with rank
   for (rank in seq(1,119, by=1) ){
     # run svd with given rank, find betas and pvals
     svdX <- svd(X, nu=rank, nv=rank) 
@@ -101,28 +85,33 @@ findThreshSvd_multiRank <- function(RR_target,    # target recall rate
     colnames(Results_svd) <- c("snpID", "gene", "beta_svd", "pval_svd")
     # Beta_svd, Pvals_long, etc get overwritten each iteration
     
-    Results_svd <- Results_svd[topTrueInds,]
+    #Results_svd <- Results_svd[topTrueInds,]
     
-    topTrue<-cbind(Results_svd, 
+    Results_all<-cbind(Results_svd, 
                        Results_xty[,3:4],
                        rank(Results_svd$pval_svd)/(m*k),
                        rank(Results_xty$pval_true)/(m*k)
     )
-    colnames(topTrue)[7] <- "percentile_pval_svd"
-    colnames(topTrue)[8] <- "percentile_pval_true"
-  
-    CorrSvdTrue[rank] <- cor(topTrue$pval_svd, topTrue$pval_true) # TODO
+    colnames(Results_all)[7] <- "percentile_pval_svd"
+    colnames(Results_all)[8] <- "percentile_pval_true"
+    
+    topTrue <- Results_all[topTrueInds,]
+    
+    Corr_all[rank] <- cor(Results_all$pval_svd, Results_all$pval_true)
+    Corr_top[rank] <- cor(topTrue$pval_svd, topTrue$pval_true)
     ThreshSvd[rank] <- findThreshSvd_oneRank(topTrue, RR_target, thresh_true)
   }
   
-  return (cbind(ThreshSvd, CorrSvdTrue))
+  return (cbind(ThreshSvd, Corr_top, Corr_all))
 }
 
-ThreshSvd_Corr <- findThreshSvd_multiRank(RR_target = 0.50,    # target recall rate
-                                     thresh_true = 10^-2 )
+ThreshSvd_Corr <- findThreshSvd_multiRank(RR_target = RR_target,
+                                     thresh_true = thresh_true)
 
-# can also plot correlation for each rank
-cor(Results_all$pval_svd, Results_all$pval_true)
-cor(topTrue$pval_svd, topTrue$pval_true)
+# can also plot correlation for each rank, for all points
+#cor(Results_all$pval_svd, Results_all$pval_true)
+#cor(topTrue$pval_svd, topTrue$pval_true)
 
 
+point(ThreshSvd, Corr_top, Corr_all)
+plot(ThreshSvd_Corr$th)
