@@ -14,8 +14,8 @@ Y<-importY(expr.txt.file)
 n<-nrow(X); m<-ncol(X); k<-ncol(Y)
 
 # test whether top percent_true snps are in top percent_svd snps
-percent_svd <- 5 # use percentile ranges 0-100, not 0-1
-percent_true <- 1
+percent_svd <- 0.05 # use percentile ranges 0-1, not 0-100%
+percent_true <- 0.01
 
 
 # say we use b components to approximate X. exact is b = min(n, m).
@@ -54,8 +54,8 @@ rownames(Results_svd_sorted)<-NULL
 # get percentiles
 Results_all<-cbind(Results_svd, 
                    Results_xty[,3:4],
-                   rank(Results_svd$pval_svd)*100/(m*k),
-                   rank(Results_xty$pval_true)*100/(m*k)
+                   rank(Results_svd$pval_svd)/(m*k),
+                   rank(Results_xty$pval_true)/(m*k)
                   )
 colnames(Results_all)[7] <- "percentile_pval_svd"
 colnames(Results_all)[8] <- "percentile_pval_true"
