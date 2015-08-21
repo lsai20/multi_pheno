@@ -34,8 +34,8 @@ findThreshSvd_oneRank <- function(topTrue, RR_target, thresh_true){
 # (cbind of all snp-pheno take much longer than cbind for only a few snp-pheno)
 findThreshSvd_multiRank <- function(RR_target, thresh_true){
   # find XT_Y values 
-  snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
-  expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
+  snps.txt.file<-"GTEx_data/Lung10k.snps.txt" 
+  expr.txt.file<-"GTEx_data/Lung5k.expr.txt" 
   X<-importX(snps.txt.file)
   Y<-importY(expr.txt.file)
   n<-nrow(X); m<-ncol(X); k<-ncol(Y) # X^T = m x n, Y = n x k
