@@ -33,10 +33,6 @@ findThreshSvd_oneRank <- function(topTrue, RR_target, thresh_true){
 # (Note: if only examining top true pvals, discard other values early to save time)
 # (cbind of all snp-pheno take much longer than cbind for only a few snp-pheno)
 findThreshSvd_multiRank <- function(RR_target, thresh_true){
-  ThreshSvd <- vector(,119)
-  Corr_top <- vector(,119) # cor(pval_svd, pval_true) of snp-pheno that cross thresh
-  Corr_all <- vector(,119) # cor(...) of all snp-pheno
-  
   # find XT_Y values 
   snps.txt.file<-"GTEx_data/Lung1k.snps.txt" 
   expr.txt.file<-"GTEx_data/Lung30.expr.txt" 
@@ -58,11 +54,10 @@ findThreshSvd_multiRank <- function(RR_target, thresh_true){
   colnames(Results_xty) <- c("snpID", "gene", "beta_true", "pval_true")
  
   topTrueInds <- which(Results_xty$pval_true <= thresh_true) 
-  #Results_xty <- Results_xty[topTrueInds,]
+  #Results_xty <- Results_xty[topTrueInds,] # use if only want top snp-pheno
   
-  # find SVD values for each rank, then find thresh_svd
-  # TODO sapply with rank
-  for (rank in seq(1,119, by=1) ){
+  # finds SVD values for each rank and then finds thresh_svd
+  doStuffRank <- function(rank){
     # run svd with given rank, find betas and pvals
     svdX <- svd(X, nu=rank, nv=rank) 
     
@@ -83,9 +78,8 @@ findThreshSvd_multiRank <- function(RR_target, thresh_true){
     Pvals_long<-melt(Pvals_svd, id.vars=1)
     Results_svd <- cbind(Beta_long, Pvals_long[,3])
     colnames(Results_svd) <- c("snpID", "gene", "beta_svd", "pval_svd")
-    # Beta_svd, Pvals_long, etc get overwritten each iteration
-    
-    #Results_svd <- Results_svd[topTrueInds,]
+    # use if don't need snp-pheno that don't pass thresh
+    #Results_svd <- Results_svd[topTrueInds,] 
     
     Results_all<-cbind(Results_svd, 
                        Results_xty[,3:4],
@@ -97,21 +91,26 @@ findThreshSvd_multiRank <- function(RR_target, thresh_true){
     
     topTrue <- Results_all[topTrueInds,]
     
-    Corr_all[rank] <- cor(Results_all$pval_svd, Results_all$pval_true)
-    Corr_top[rank] <- cor(topTrue$pval_svd, topTrue$pval_true)
-    ThreshSvd[rank] <- findThreshSvd_oneRank(topTrue, RR_target, thresh_true)
+    threshSvd <- findThreshSvd_oneRank(topTrue, RR_target, thresh_true)
+    corr_top <- cor(topTrue$pval_svd, topTrue$pval_true)
+    corr_all <- cor(Results_all$pval_svd, Results_all$pval_true)
+    
+    return (rbind(threshSvd, corr_top, corr_all))
   }
-  
-  return (cbind(ThreshSvd, Corr_top, Corr_all))
+
+  ThreshSvd_Corr <- vapply(1:119, doStuffRank, FUN.VALUE=double(3))
+  ThreshSvd_Corr <- t(ThreshSvd_Corr)
+  colnames(ThreshSvd_Corr) <- c("threshSvd", "corr_top", "corr_all")
+  return (ThreshSvd_Corr)
 }
 
 ThreshSvd_Corr <- findThreshSvd_multiRank(RR_target = RR_target,
                                      thresh_true = thresh_true)
 
+
+
+# TODO plot Results_1k_30
+# TODO plot Results_10k_5k
 # can also plot correlation for each rank, for all points
-#cor(Results_all$pval_svd, Results_all$pval_true)
-#cor(topTrue$pval_svd, topTrue$pval_true)
-
-
-point(ThreshSvd, Corr_top, Corr_all)
-plot(ThreshSvd_Corr$th)
+#point(ThreshSvd, Corr_top, Corr_all)
+#Results_1k_30 <- ThreshSvd_Corr
