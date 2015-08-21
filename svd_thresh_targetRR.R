@@ -3,8 +3,8 @@
 # (so if 100 true vals, want lowest thresh that gets any 99, not top 99)
 library(reshape2)
 
-RR_target = 0.50    # target recall rate
-thresh_true = 10^-3 # desired threshold
+RR_target = 0.99    # target recall rate
+thresh_true = 10^-6 # desired threshold
 
 # finds minimum pval_svd needed to achieve recall rate, for given rank
 findThreshSvd_oneRank <- function(topTrue, RR_target, thresh_true){
