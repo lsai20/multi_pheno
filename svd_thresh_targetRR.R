@@ -110,6 +110,7 @@ ThreshSvd_Corr <- findThreshSvd_multiRank(RR_target = RR_target,
 ThreshSvd_Corr <- cbind(1:119, ThreshSvd_Corr)
 colnames(ThreshSvd_Corr)[1] <- "svdX_rank"
 
+rownames(ThreshSvd_Corr)<-NULL
 write.table(ThreshSvd_Corr, "thresh_corr_by_svdXrank_10ksnp_5kpheno.Rtable.txt")
 
 ThreshSvd_Corr<-as.data.frame(ThreshSvd_Corr)
