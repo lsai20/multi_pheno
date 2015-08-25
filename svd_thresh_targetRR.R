@@ -107,10 +107,32 @@ findThreshSvd_multiRank <- function(RR_target, thresh_true){
 ThreshSvd_Corr <- findThreshSvd_multiRank(RR_target = RR_target,
                                      thresh_true = thresh_true)
 
+ThreshSvd_Corr <- cbind(1:119, ThreshSvd_Corr)
+colnames(ThreshSvd_Corr)[1] <- "svdX_rank"
 
+write.table(ThreshSvd_Corr, "thresh_corr_by_svdXrank_10ksnp_5kpheno.Rtable.txt")
 
+ThreshSvd_Corr<-as.data.frame(ThreshSvd_Corr)
 # TODO plot Results_1k_30
 # TODO plot Results_10k_5k
 # can also plot correlation for each rank, for all points
+
+dev.off()
+
+par(mfrow=c(1,3))
+attach(ThreshSvd_Corr)
+plot(svdX_rank, threshSvd, ylim=c(0,1), cex.lab=1.5, main="svd threshold for RR = 99%, alpha = 10^-6")
+plot(svdX_rank, corr_top, cex.lab=1.5, main="correlation of pval_svd, pval_true, for snp-pheno's with pval_true >= 10^-6")
+plot(svdX_rank, corr_all, cex.lab=1.5, main="correlation of pval_svd, pval_true, for all snp-pheno's")
+
+
+dev.off()
+
+par(mfrow=c(1,3))
+attach(ThreshSvd_Corr)
+plot(svdX_rank, threshSvd, cex.lab=1.5, main="svd threshold for RR = 99%, alpha = 10^-6", log="y")
+plot(svdX_rank, corr_top, cex.lab=1.5, main="correlation of pval_svd, pval_true, for snp-pheno's with pval_true >= 10^-6", log="y")
+plot(svdX_rank, corr_all, cex.lab=1.5, main="correlation of pval_svd, pval_true, for all snp-pheno's", log="y")
+
 #point(ThreshSvd, Corr_top, Corr_all)
 #Results_1k_30 <- ThreshSvd_Corr
